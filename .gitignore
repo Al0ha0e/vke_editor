@@ -1,0 +1,11 @@
+*.exe
+*.obj
+*.dblite
+*.spv
+vkengine.lib
+PhysXGpu_64.dll
+.vscode
+out
+tests/*
+!builtin_resources/**/*.obj
+!tests/*.cpp
