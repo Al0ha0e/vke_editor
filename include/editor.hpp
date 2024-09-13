@@ -26,25 +26,22 @@ namespace vke_editor
 
         vke_common::Engine *engine;
 
-        static VKEditor *Init(int width, int height)
+        static VKEditor *Init()
         {
+            vke_render::RenderEnvironment *environment = vke_render::RenderEnvironment::GetInstance();
             instance = new VKEditor();
+            std::cout << "INI0\n";
+            UIRenderer::Init(&(environment->rootRenderContext));
+            std::cout << "INI1\n";
 
-            std::unique_ptr<vke_editor::UIRenderer> uiRenderer = std::make_unique<vke_editor::UIRenderer>();
             std::vector<vke_render::PassType> passes = {
                 vke_render::BASE_RENDERER,
-                vke_render::OPAQUE_RENDERER,
-                vke_render::CUSTOM_RENDERER};
-
+                vke_render::OPAQUE_RENDERER};
             std::vector<std::unique_ptr<vke_render::SubpassBase>> customPasses;
-            customPasses.push_back(std::move(uiRenderer));
+            std::vector<vke_render::RenderPassInfo> customPassInfo;
 
-            std::vector<vke_render::RenderPassInfo> customPassInfo{
-                vke_render::RenderPassInfo(
-                    VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-                    VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT)};
-
-            instance->engine = vke_common::Engine::Init(width, height, passes, customPasses, customPassInfo);
+            instance->engine = vke_common::Engine::Init(&(UIRenderer::GetInstance()->engineRenderContext),
+                                                        passes, customPasses, customPassInfo);
 
             return instance;
         }
@@ -52,11 +49,13 @@ namespace vke_editor
         void Update()
         {
             engine->Update();
+            UIRenderer::Update();
         };
 
         static void Dispose()
         {
-            instance->engine->Dispose();
+            // instance->engine->Dispose();
+            UIRenderer::Dispose();
             delete instance;
         }
     };

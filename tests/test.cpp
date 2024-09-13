@@ -26,10 +26,19 @@ vke_common::GameObject *objp = nullptr, *obj2p = nullptr;
 void processInput(GLFWwindow *window, vke_common::GameObject *target, vke_common::GameObject *obj);
 void mouse_callback(GLFWwindow *window, double xpos, double ypos);
 
+GLFWwindow *initWindow(int width, int height)
+{
+    glfwInit();
+    glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+    return glfwCreateWindow(width, height, "Vulkan window", nullptr, nullptr);
+}
+
 int main()
 {
-    engine = vke_editor::VKEditor::Init(WIDTH, HEIGHT);
-    vke_render::RenderEnvironment *environment = vke_render::RenderEnvironment::GetInstance();
+    GLFWwindow *window = initWindow(WIDTH, HEIGHT);
+    vke_common::EventSystem::Init();
+    vke_render::RenderEnvironment *environment = vke_render::RenderEnvironment::Init(window);
+    engine = vke_editor::VKEditor::Init();
 
     std::unique_ptr<vke_common::GameObject> cameraGameObj = std::make_unique<vke_common::GameObject>(camParam);
     camp = cameraGameObj.get();
@@ -43,8 +52,8 @@ int main()
     vke_common::SceneManager::SetCurrentScene(std::move(scene));
 
     // glfwSetInputMode(engine->environment->window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-    glfwSetCursorPosCallback(environment->window, mouse_callback);
-    glfwSetFramebufferSizeCallback(environment->window, vke_common::Engine::OnWindowResize);
+    // glfwSetCursorPosCallback(environment->window, mouse_callback);
+    // glfwSetFramebufferSizeCallback(environment->window, vke_common::Engine::OnWindowResize);
 
     while (!glfwWindowShouldClose(environment->window))
     {
@@ -63,7 +72,7 @@ int main()
     }
     vkDeviceWaitIdle(environment->logicalDevice);
 
-    vke_common::Engine::Dispose();
+    vke_editor::VKEditor::Dispose();
     return 0;
 }
 
@@ -77,113 +86,113 @@ void processInput(GLFWwindow *window, vke_common::GameObject *target, vke_common
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
 
-    CHECK_KEY(GLFW_KEY_W)
-    {
-        target->TranslateLocal(glm::vec3(0, 0, -moveSpeed * time_delta));
-    }
-    CHECK_KEY(GLFW_KEY_A)
-    {
-        target->TranslateLocal(glm::vec3(-moveSpeed * time_delta, 0, 0));
-    }
-    CHECK_KEY(GLFW_KEY_S)
-    {
-        target->TranslateLocal(glm::vec3(0, 0, moveSpeed * time_delta));
-    }
-    CHECK_KEY(GLFW_KEY_D)
-    {
-        target->TranslateLocal(glm::vec3(moveSpeed * time_delta, 0, 0));
-    }
-    CHECK_KEY(GLFW_KEY_0)
-    {
-        vke_common::SceneManager::SaveScene("./tests/scene/test_scene.json");
-    }
-    CHECK_KEY(GLFW_KEY_1)
-    {
-        obj->RotateLocal(rotateSpeed * time_delta, glm::vec3(1, 0, 0));
-    }
-    CHECK_KEY(GLFW_KEY_2)
-    {
-        obj->RotateLocal(rotateSpeed * time_delta, glm::vec3(0, 1, 0));
-    }
-    CHECK_KEY(GLFW_KEY_3)
-    {
-        obj->RotateLocal(rotateSpeed * time_delta, glm::vec3(0, 0, 1));
-    }
-    CHECK_KEY(GLFW_KEY_4)
-    {
-        obj->RotateGlobal(rotateSpeed * time_delta, glm::vec3(1, 0, 0));
-    }
-    CHECK_KEY(GLFW_KEY_5)
-    {
-        obj->RotateGlobal(rotateSpeed * time_delta, glm::vec3(0, 1, 0));
-    }
-    CHECK_KEY(GLFW_KEY_6)
-    {
-        obj->RotateGlobal(rotateSpeed * time_delta, glm::vec3(0, 0, 1));
-    }
-    CHECK_KEY(GLFW_KEY_8)
-    {
-        obj->Scale(glm::vec3(0.2 * time_delta, 0, 0));
-    }
-    CHECK_KEY(GLFW_KEY_9)
-    {
-        obj->Scale(glm::vec3(-0.2 * time_delta, 0, 0));
-    }
+    // CHECK_KEY(GLFW_KEY_W)
+    // {
+    //     target->TranslateLocal(glm::vec3(0, 0, -moveSpeed * time_delta));
+    // }
+    // CHECK_KEY(GLFW_KEY_A)
+    // {
+    //     target->TranslateLocal(glm::vec3(-moveSpeed * time_delta, 0, 0));
+    // }
+    // CHECK_KEY(GLFW_KEY_S)
+    // {
+    //     target->TranslateLocal(glm::vec3(0, 0, moveSpeed * time_delta));
+    // }
+    // CHECK_KEY(GLFW_KEY_D)
+    // {
+    //     target->TranslateLocal(glm::vec3(moveSpeed * time_delta, 0, 0));
+    // }
+    // CHECK_KEY(GLFW_KEY_0)
+    // {
+    //     vke_common::SceneManager::SaveScene("./tests/scene/test_scene.json");
+    // }
+    // CHECK_KEY(GLFW_KEY_1)
+    // {
+    //     obj->RotateLocal(rotateSpeed * time_delta, glm::vec3(1, 0, 0));
+    // }
+    // CHECK_KEY(GLFW_KEY_2)
+    // {
+    //     obj->RotateLocal(rotateSpeed * time_delta, glm::vec3(0, 1, 0));
+    // }
+    // CHECK_KEY(GLFW_KEY_3)
+    // {
+    //     obj->RotateLocal(rotateSpeed * time_delta, glm::vec3(0, 0, 1));
+    // }
+    // CHECK_KEY(GLFW_KEY_4)
+    // {
+    //     obj->RotateGlobal(rotateSpeed * time_delta, glm::vec3(1, 0, 0));
+    // }
+    // CHECK_KEY(GLFW_KEY_5)
+    // {
+    //     obj->RotateGlobal(rotateSpeed * time_delta, glm::vec3(0, 1, 0));
+    // }
+    // CHECK_KEY(GLFW_KEY_6)
+    // {
+    //     obj->RotateGlobal(rotateSpeed * time_delta, glm::vec3(0, 0, 1));
+    // }
+    // CHECK_KEY(GLFW_KEY_8)
+    // {
+    //     obj->Scale(glm::vec3(0.2 * time_delta, 0, 0));
+    // }
+    // CHECK_KEY(GLFW_KEY_9)
+    // {
+    //     obj->Scale(glm::vec3(-0.2 * time_delta, 0, 0));
+    // }
 
-    CHECK_KEY(GLFW_KEY_T)
-    {
-        obj2p->TranslateGlobal(glm::vec3(moveSpeed * time_delta, 0, 0));
-        // obj2p->RotateLocal(rotateSpeed * time_delta, glm::vec3(1, 0, 0));
-    }
-    CHECK_KEY(GLFW_KEY_Y)
-    {
-        obj2p->TranslateGlobal(glm::vec3(0, moveSpeed * time_delta, 0));
-        // obj2p->RotateLocal(rotateSpeed * time_delta, glm::vec3(0, 1, 0));
-    }
-    CHECK_KEY(GLFW_KEY_U)
-    {
-        obj2p->TranslateGlobal(glm::vec3(0, 0, moveSpeed * time_delta));
-        // obj2p->RotateLocal(rotateSpeed * time_delta, glm::vec3(0, 0, 1));
-    }
-    CHECK_KEY(GLFW_KEY_G)
-    {
-        obj2p->RotateGlobal(rotateSpeed * time_delta, glm::vec3(1, 0, 0));
-    }
-    CHECK_KEY(GLFW_KEY_H)
-    {
-        obj2p->RotateGlobal(rotateSpeed * time_delta, glm::vec3(0, 1, 0));
-    }
-    CHECK_KEY(GLFW_KEY_J)
-    {
-        obj2p->RotateGlobal(rotateSpeed * time_delta, glm::vec3(0, 0, 1));
-    }
-    static bool pressed = false;
-    if (glfwGetKey(window, GLFW_KEY_7) == GLFW_PRESS && !pressed)
-    {
-        pressed = true;
-        obj2p->SetParent(obj2p->parent ? nullptr : objp);
-    }
-    if (glfwGetKey(window, GLFW_KEY_7) == GLFW_RELEASE)
-    {
-        pressed = false;
-    }
+    // CHECK_KEY(GLFW_KEY_T)
+    // {
+    //     obj2p->TranslateGlobal(glm::vec3(moveSpeed * time_delta, 0, 0));
+    //     // obj2p->RotateLocal(rotateSpeed * time_delta, glm::vec3(1, 0, 0));
+    // }
+    // CHECK_KEY(GLFW_KEY_Y)
+    // {
+    //     obj2p->TranslateGlobal(glm::vec3(0, moveSpeed * time_delta, 0));
+    //     // obj2p->RotateLocal(rotateSpeed * time_delta, glm::vec3(0, 1, 0));
+    // }
+    // CHECK_KEY(GLFW_KEY_U)
+    // {
+    //     obj2p->TranslateGlobal(glm::vec3(0, 0, moveSpeed * time_delta));
+    //     // obj2p->RotateLocal(rotateSpeed * time_delta, glm::vec3(0, 0, 1));
+    // }
+    // CHECK_KEY(GLFW_KEY_G)
+    // {
+    //     obj2p->RotateGlobal(rotateSpeed * time_delta, glm::vec3(1, 0, 0));
+    // }
+    // CHECK_KEY(GLFW_KEY_H)
+    // {
+    //     obj2p->RotateGlobal(rotateSpeed * time_delta, glm::vec3(0, 1, 0));
+    // }
+    // CHECK_KEY(GLFW_KEY_J)
+    // {
+    //     obj2p->RotateGlobal(rotateSpeed * time_delta, glm::vec3(0, 0, 1));
+    // }
+    // static bool pressed = false;
+    // if (glfwGetKey(window, GLFW_KEY_7) == GLFW_PRESS && !pressed)
+    // {
+    //     pressed = true;
+    //     obj2p->SetParent(obj2p->parent ? nullptr : objp);
+    // }
+    // if (glfwGetKey(window, GLFW_KEY_7) == GLFW_RELEASE)
+    // {
+    //     pressed = false;
+    // }
 }
 
 void mouse_callback(GLFWwindow *window, double xpos, double ypos)
 {
-    static bool firstMouse = true;
-    static float lastX, lastY;
-    if (firstMouse)
-    {
-        lastX = xpos;
-        lastY = ypos;
-        firstMouse = false;
-    }
+    // static bool firstMouse = true;
+    // static float lastX, lastY;
+    // if (firstMouse)
+    // {
+    //     lastX = xpos;
+    //     lastY = ypos;
+    //     firstMouse = false;
+    // }
 
-    float xoffset = xpos - lastX;
-    float yoffset = lastY - ypos;
-    lastX = xpos;
-    lastY = ypos;
-    camp->RotateGlobal(-xoffset * rotateSpeed * time_delta, glm::vec3(0.0f, 1.0f, 0.0f));
-    camp->RotateLocal(yoffset * rotateSpeed * time_delta, glm::vec3(1.0f, 0.0f, 0.0f));
+    // float xoffset = xpos - lastX;
+    // float yoffset = lastY - ypos;
+    // lastX = xpos;
+    // lastY = ypos;
+    // camp->RotateGlobal(-xoffset * rotateSpeed * time_delta, glm::vec3(0.0f, 1.0f, 0.0f));
+    // camp->RotateLocal(yoffset * rotateSpeed * time_delta, glm::vec3(1.0f, 0.0f, 0.0f));
 }

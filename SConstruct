@@ -9,7 +9,7 @@ libs = ['msvcrtd', 'libcmt', 'Gdi32', 'shell32', 'user32', 'vulkan-1', 'glfw3', 
 libpath = ['./libs','./vkEngine/libs','D:/VulkanSDK/Lib']
 cpppath = ['./include','./vkEngine/include','D:/VulkanSDK/Include','./imgui']
 cppdefines = ['NDEBUG']
-commonsrc = Glob('./imgui/*.cpp') + ['./imgui/backends/imgui_impl_vulkan.cpp','./imgui/backends/imgui_impl_glfw.cpp','./src/editor.cpp']
+commonsrc = Glob('./imgui/*.cpp') + ['./imgui/backends/imgui_impl_vulkan.cpp','./imgui/backends/imgui_impl_glfw.cpp','./src/editor.cpp','./src/ui_render.cpp']
 
 
 Export({"dlldst":dlldst,"reldir":reldir,"env":env})
