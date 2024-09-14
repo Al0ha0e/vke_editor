@@ -8,6 +8,14 @@ namespace vke_editor
     {
         VkDevice logicalDevice = environment->logicalDevice;
 
+        for (auto framebuffer : frameBuffers)
+            vkDestroyFramebuffer(environment->logicalDevice, framebuffer, nullptr);
+    }
+
+    void UIRenderer::cleanupSceneWindow()
+    {
+        VkDevice logicalDevice = environment->logicalDevice;
+
         for (auto handle : instance->imguiHandles)
             ImGui_ImplVulkan_RemoveTexture(handle);
 
@@ -28,21 +36,21 @@ namespace vke_editor
 
         for (auto imageMemory : instance->depthImageMemories)
             vkFreeMemory(logicalDevice, imageMemory, nullptr);
-
-        for (auto framebuffer : frameBuffers)
-            vkDestroyFramebuffer(environment->logicalDevice, framebuffer, nullptr);
     }
 
     void UIRenderer::recreate(vke_render::RenderContext *ctx)
     {
         cleanup();
         uiRenderContext = *ctx;
-        engineRenderContext.width = ctx->width;
-        engineRenderContext.height = ctx->height;
+        createFramebuffers();
+    }
+
+    void UIRenderer::recreateSceneWindow()
+    {
+        cleanupSceneWindow();
         createImages();
         createImageViews();
         createGUIHandles();
-        createFramebuffers();
     }
 
     void UIRenderer::createCommandPool()
@@ -236,6 +244,56 @@ namespace vke_editor
         }
     }
 
+    void UIRenderer::showMainMenuBar()
+    {
+        ImGui::BeginMainMenuBar();
+        if (ImGui::BeginMenu("SB"))
+        {
+            ImGui::MenuItem("AAA", nullptr, nullptr);
+            ImGui::EndMenu();
+        }
+        ImGui::EndMainMenuBar();
+    }
+
+    void UIRenderer::showHierarchy()
+    {
+        ImGui::Begin("Hierarchy");
+        ImGui::Text("This is some useful text.");
+        if (ImGui::Button("Save"))
+            std::cout << "???\n";
+        ImGui::End();
+    }
+
+    void UIRenderer::showScene()
+    {
+        ImGui::Begin("Scene");
+        ImVec2 vMin = ImGui::GetWindowContentRegionMin();
+        ImVec2 vMax = ImGui::GetWindowContentRegionMax();
+        ImGui::Image((ImTextureID)(imguiHandles[currentFrame]), ImVec2(vMax.x, vMax.y - 30));
+        if (!sceneResized && engineRenderContext.width != vMax.x || engineRenderContext.height != vMax.y)
+        {
+            engineRenderContext.width = vMax.x;
+            engineRenderContext.height = vMax.y;
+            std::cout << "RESIZED\n";
+            sceneResized = true;
+        }
+        ImGui::End();
+    }
+
+    void UIRenderer::showInspector()
+    {
+        ImGui::Begin("Inspector");
+        ImGui::Text("This is some useful text.");
+        ImGui::End();
+    }
+
+    void UIRenderer::showAssets()
+    {
+        ImGui::Begin("Assets");
+        ImGui::Text("This is some useful text.");
+        ImGui::End();
+    }
+
     void UIRenderer::render()
     {
         uint32_t imageIndex = vke_render::RenderEnvironment::AcquireNextImage(currentFrame);
@@ -269,16 +327,14 @@ namespace vke_editor
         ImGui_ImplVulkan_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
+        ImGui::DockSpaceOverViewport(ImGui::GetMainViewport());
 
-        ImGui::Begin("Hello, world!");
-        ImGui::Text("This is some useful text.");
-        if (ImGui::Button("Save"))
-            std::cout << "???\n";
-        ImGui::End();
+        showMainMenuBar();
+        showHierarchy();
+        showScene();
+        showInspector();
+        showAssets();
 
-        ImGui::Begin("Scene");
-        ImGui::Image((ImTextureID)(imguiHandles[currentFrame]), ImVec2(400, 300));
-        ImGui::End();
         ImGuiIO &io = ImGui::GetIO();
         ImGui::Render();
 
@@ -299,6 +355,13 @@ namespace vke_editor
         {
             ImGui::UpdatePlatformWindows();
             ImGui::RenderPlatformWindowsDefault();
+        }
+
+        if (sceneResized)
+        {
+            recreateSceneWindow();
+            resizeEventHub.DispatchEvent(&(instance->engineRenderContext));
+            sceneResized = false;
         }
     }
 }

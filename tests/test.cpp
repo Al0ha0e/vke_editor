@@ -40,16 +40,18 @@ int main()
     vke_render::RenderEnvironment *environment = vke_render::RenderEnvironment::Init(window);
     engine = vke_editor::VKEditor::Init();
 
-    std::unique_ptr<vke_common::GameObject> cameraGameObj = std::make_unique<vke_common::GameObject>(camParam);
-    camp = cameraGameObj.get();
-    cameraGameObj->AddComponent(std::make_unique<vke_component::Camera>(105, WIDTH, HEIGHT, 0.01, 1000, camp));
+    // std::unique_ptr<vke_common::GameObject> cameraGameObj = std::make_unique<vke_common::GameObject>(camParam);
+    // camp = cameraGameObj.get();
+    // cameraGameObj->AddComponent(std::make_unique<vke_component::Camera>(105, WIDTH, HEIGHT, 0.01, 1000, camp));
 
-    vke_common::ResourceManager *manager = vke_common::ResourceManager::GetInstance();
+    // vke_common::ResourceManager *manager = vke_common::ResourceManager::GetInstance();
 
-    std::unique_ptr<vke_common::Scene> scene = std::make_unique<vke_common::Scene>();
-    scene->AddObject(std::move(cameraGameObj));
+    // std::unique_ptr<vke_common::Scene> scene = std::make_unique<vke_common::Scene>();
+    // scene->AddObject(std::move(cameraGameObj));
 
-    vke_common::SceneManager::SetCurrentScene(std::move(scene));
+    // vke_common::SceneManager::SetCurrentScene(std::move(scene));
+
+    vke_common::SceneManager::LoadScene("./tests/scene/test_scene.json");
 
     // glfwSetInputMode(engine->environment->window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     // glfwSetCursorPosCallback(environment->window, mouse_callback);

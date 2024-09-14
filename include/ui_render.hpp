@@ -36,6 +36,7 @@ namespace vke_editor
 
             instance->uiRenderContext = *ctx;
             instance->currentFrame = 0;
+            instance->sceneResized = false;
             vke_render::RenderEnvironment *environment = vke_render::RenderEnvironment::GetInstance();
             instance->environment = environment;
 
@@ -121,6 +122,7 @@ namespace vke_editor
             for (auto sampler : instance->samplers)
                 vkDestroySampler(logicalDevice, sampler, nullptr);
             instance->cleanup();
+            instance->cleanupSceneWindow();
             for (size_t i = 0; i < instance->engineRenderContext.imageCnt; i++)
             {
                 vkDestroySemaphore(logicalDevice, instance->renderFinishedSemaphores[i], nullptr);
@@ -133,7 +135,6 @@ namespace vke_editor
         static void OnWindowResize(void *listener, vke_render::RenderContext *ctx)
         {
             instance->recreate(ctx);
-            instance->resizeEventHub.DispatchEvent(&(instance->engineRenderContext));
         }
 
         static void Update()
@@ -181,6 +182,7 @@ namespace vke_editor
         std::vector<VkSemaphore> renderFinishedSemaphores;
         std::vector<VkFence> inFlightFences;
 
+        bool sceneResized;
         std::vector<VkImage> colorImages;
         std::vector<VkDeviceMemory> colorImageMemories;
         std::vector<VkImageView> colorImageViews;
@@ -195,7 +197,9 @@ namespace vke_editor
         std::vector<VkFramebuffer> frameBuffers;
 
         void cleanup();
+        void cleanupSceneWindow();
         void recreate(vke_render::RenderContext *ctx);
+        void recreateSceneWindow();
         void createCommandPool();
         void createCommandBuffers();
         void createSyncObjects();
@@ -206,6 +210,12 @@ namespace vke_editor
         void createFramebuffers();
         void createGUIHandles();
         void render();
+
+        void showMainMenuBar();
+        void showHierarchy();
+        void showScene();
+        void showInspector();
+        void showAssets();
     };
 }
 
