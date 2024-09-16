@@ -4,6 +4,7 @@
 #include <event.hpp>
 #include <render/subpass.hpp>
 #include <imgui.h>
+#include <imgui_internal.h>
 #include <backends/imgui_impl_glfw.h>
 #include <backends/imgui_impl_vulkan.h>
 
@@ -40,6 +41,19 @@ namespace vke_editor
             vke_render::RenderEnvironment *environment = vke_render::RenderEnvironment::GetInstance();
             instance->environment = environment;
 
+            // Setup Dear ImGui context
+            IMGUI_CHECKVERSION();
+            ImGui::CreateContext();
+            ImGuiIO &io = ImGui::GetIO();
+            (void)io;
+            io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
+            io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;  // Enable Gamepad Controls
+            io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+            // io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
+            //  Setup Dear ImGui style
+            ImGui::StyleColorsDark();
+            // ImGui::StyleColorsLight();
+
             ctx->resizeEventHub->AddEventListener(instance,
                                                   vke_common::EventHub<vke_render::RenderContext>::callback_t(OnWindowResize));
             instance->engineRenderContext = vke_render::RenderContext{
@@ -62,19 +76,6 @@ namespace vke_editor
             instance->createImages();
             instance->createImageViews();
             instance->createSamplers();
-
-            // Setup Dear ImGui context
-            IMGUI_CHECKVERSION();
-            ImGui::CreateContext();
-            ImGuiIO &io = ImGui::GetIO();
-            (void)io;
-            io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
-            io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;  // Enable Gamepad Controls
-            io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
-            // io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
-            //  Setup Dear ImGui style
-            ImGui::StyleColorsDark();
-            // ImGui::StyleColorsLight();
 
             VkDescriptorPoolSize pool_sizes[] =
                 {
@@ -109,6 +110,7 @@ namespace vke_editor
             init_info.CheckVkResultFn = nullptr;
             ImGui_ImplVulkan_Init(&init_info);
             instance->createGUIHandles();
+            return instance;
         }
 
         static void Dispose()

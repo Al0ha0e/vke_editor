@@ -274,7 +274,6 @@ namespace vke_editor
         {
             engineRenderContext.width = vMax.x;
             engineRenderContext.height = vMax.y;
-            std::cout << "RESIZED\n";
             sceneResized = true;
         }
         ImGui::End();
