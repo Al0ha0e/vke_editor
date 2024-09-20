@@ -1,4 +1,5 @@
 #include <ui_render.hpp>
+#include <scene.hpp>
 
 namespace vke_editor
 {
@@ -244,52 +245,18 @@ namespace vke_editor
         }
     }
 
-    void UIRenderer::showMainMenuBar()
-    {
-        ImGui::BeginMainMenuBar();
-        if (ImGui::BeginMenu("SB"))
-        {
-            ImGui::MenuItem("AAA", nullptr, nullptr);
-            ImGui::EndMenu();
-        }
-        ImGui::EndMainMenuBar();
-    }
-
-    void UIRenderer::showHierarchy()
-    {
-        ImGui::Begin("Hierarchy");
-        ImGui::Text("This is some useful text.");
-        if (ImGui::Button("Save"))
-            std::cout << "???\n";
-        ImGui::End();
-    }
-
     void UIRenderer::showScene()
     {
         ImGui::Begin("Scene");
-        ImVec2 vMin = ImGui::GetWindowContentRegionMin();
-        ImVec2 vMax = ImGui::GetWindowContentRegionMax();
-        ImGui::Image((ImTextureID)(imguiHandles[currentFrame]), ImVec2(vMax.x, vMax.y - 30));
-        if (!sceneResized && engineRenderContext.width != vMax.x || engineRenderContext.height != vMax.y)
+        ImVec2 windowSize = ImGui::GetWindowSize();
+        ImGui::Image((ImTextureID)(imguiHandles[currentFrame]), ImVec2(windowSize.x, windowSize.y - 30));
+        if (!sceneResized && engineRenderContext.width != windowSize.x || engineRenderContext.height != windowSize.y)
         {
-            engineRenderContext.width = vMax.x;
-            engineRenderContext.height = vMax.y;
+            engineRenderContext.width = windowSize.x;
+            engineRenderContext.height = windowSize.y;
             sceneResized = true;
+            std::cout << "?? " << windowSize.x << " " << windowSize.y << "\n";
         }
-        ImGui::End();
-    }
-
-    void UIRenderer::showInspector()
-    {
-        ImGui::Begin("Inspector");
-        ImGui::Text("This is some useful text.");
-        ImGui::End();
-    }
-
-    void UIRenderer::showAssets()
-    {
-        ImGui::Begin("Assets");
-        ImGui::Text("This is some useful text.");
         ImGui::End();
     }
 
@@ -328,11 +295,8 @@ namespace vke_editor
         ImGui::NewFrame();
         ImGui::DockSpaceOverViewport(ImGui::GetMainViewport());
 
-        showMainMenuBar();
-        showHierarchy();
+        updateGUI();
         showScene();
-        showInspector();
-        showAssets();
 
         ImGuiIO &io = ImGui::GetIO();
         ImGui::Render();
@@ -358,6 +322,7 @@ namespace vke_editor
 
         if (sceneResized)
         {
+            // vkWaitForFences(instance->environment->logicalDevice, 1, &instance->inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
             recreateSceneWindow();
             resizeEventHub.DispatchEvent(&(instance->engineRenderContext));
             sceneResized = false;

@@ -42,8 +42,6 @@ int main()
 
     engine = vke_editor::VKEditor::Init();
 
-    vke_common::SceneManager::LoadScene("./tests/scene/test_scene.json");
-
     while (!glfwWindowShouldClose(environment->window))
     {
         glfwPollEvents();

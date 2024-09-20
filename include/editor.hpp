@@ -9,11 +9,22 @@
 namespace vke_editor
 {
 
+    enum GameObjectPreset
+    {
+        OBJECT_EMPTY,
+        OBJECT_PLANE,
+        OBJECT_CUBE,
+        OBJECT_SPHERE,
+        OBJECT_CYLINDER,
+        OBJECT_MONKEY
+    };
+
     class VKEditor
     {
     private:
         static VKEditor *instance;
-        VKEditor() : rightClickedInSceneWindow(false), sceneCameraRotateSpeed(1.5f), sceneCameraMoveSpeed(2.5f) {}
+        VKEditor()
+            : rightClickedInSceneWindow(false), sceneCameraRotateSpeed(1.5f), sceneCameraMoveSpeed(2.5f), selectedObject(nullptr) {}
         ~VKEditor() {}
         VKEditor(const VKEditor &);
         VKEditor &operator=(const VKEditor);
@@ -27,6 +38,8 @@ namespace vke_editor
         vke_common::Engine *engine;
         vke_common::InputManager *inputManager;
         vke_common::TimeManager *timeManager;
+        vke_common::ResourceManager *resourceManager;
+        vke_common::SceneManager *sceneManager;
 
         static VKEditor *Init()
         {
@@ -37,7 +50,7 @@ namespace vke_editor
             vke_common::EventSystem::AddEventListener(vke_common::EVENT_MOUSE_CLICK, instance, vke_common::EventCallback(OnMouseClick));
 
             std::cout << "INI0\n";
-            UIRenderer::Init(&(environment->rootRenderContext));
+            UIRenderer::Init(&(environment->rootRenderContext), std::function<void()>(handleGUILogic));
             std::cout << "INI1\n";
 
             std::vector<vke_render::PassType> passes = {
@@ -48,6 +61,11 @@ namespace vke_editor
 
             instance->engine = vke_common::Engine::Init(&(UIRenderer::GetInstance()->engineRenderContext),
                                                         passes, customPasses, customPassInfo);
+            instance->resourceManager = vke_common::ResourceManager::GetInstance();
+            instance->sceneManager = vke_common::SceneManager::GetInstance();
+            vke_common::SceneManager::LoadScene("./tests/scene/test_scene.json");
+
+            instance->sceneCamera = instance->sceneManager->currentScene->objects[1].get();
 
             return instance;
         }
@@ -92,8 +110,22 @@ namespace vke_editor
         glm::vec2 prevMousePos;
         float sceneCameraRotateSpeed;
         float sceneCameraMoveSpeed;
+        vke_common::GameObject *sceneCamera;
+        vke_common::GameObject *selectedObject;
 
         void handleEditorLogic();
+        void showMainMenuBar();
+        void showHierarchy();
+        void drawHierarchyList(vke_common::GameObject *object, ImGuiTreeNodeFlags commonFlags, bool &showRightMenu);
+        void showInspector();
+        void showAssets();
+        static void handleGUILogic();
+
+        void newScene();
+        void loadScene();
+        void saveScene();
+
+        void createGameObject(GameObjectPreset preset);
     };
 }
 

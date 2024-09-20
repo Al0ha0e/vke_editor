@@ -31,11 +31,12 @@ namespace vke_editor
             return instance;
         }
 
-        static UIRenderer *Init(vke_render::RenderContext *ctx)
+        static UIRenderer *Init(vke_render::RenderContext *ctx, std::function<void()> updateGUIFunc)
         {
             instance = new UIRenderer();
 
             instance->uiRenderContext = *ctx;
+            instance->updateGUI = updateGUIFunc;
             instance->currentFrame = 0;
             instance->sceneResized = false;
             vke_render::RenderEnvironment *environment = vke_render::RenderEnvironment::GetInstance();
@@ -57,8 +58,10 @@ namespace vke_editor
             ctx->resizeEventHub->AddEventListener(instance,
                                                   vke_common::EventHub<vke_render::RenderContext>::callback_t(OnWindowResize));
             instance->engineRenderContext = vke_render::RenderContext{
-                ctx->width,
-                ctx->height,
+                463,
+                499,
+                // ctx->width,
+                // ctx->height,
                 ctx->imageCnt,
                 ctx->colorFormat,
                 ctx->depthFormat,
@@ -198,6 +201,8 @@ namespace vke_editor
         VkRenderPass renderPass;
         std::vector<VkFramebuffer> frameBuffers;
 
+        std::function<void()> updateGUI;
+
         void cleanup();
         void cleanupSceneWindow();
         void recreate(vke_render::RenderContext *ctx);
@@ -213,11 +218,7 @@ namespace vke_editor
         void createGUIHandles();
         void render();
 
-        void showMainMenuBar();
-        void showHierarchy();
         void showScene();
-        void showInspector();
-        void showAssets();
     };
 }
 
