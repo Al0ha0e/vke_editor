@@ -97,19 +97,18 @@ namespace vke_editor
             }
         };
 
-        std::string name = std::to_string(object->id);
         ImGuiTreeNodeFlags currentFlags = commonFlags;
         if (object == selectedObject)
             currentFlags |= ImGuiTreeNodeFlags_Selected;
         if (object->children.size() == 0)
         {
             currentFlags |= ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen;
-            ImGui::TreeNodeEx(name.c_str(), currentFlags);
+            ImGui::TreeNodeEx(object->name, currentFlags);
             handleMouse();
         }
         else
         {
-            if (ImGui::TreeNodeEx(name.c_str(), currentFlags))
+            if (ImGui::TreeNodeEx(object->name, currentFlags))
             {
                 handleMouse();
                 for (auto &kv : object->children)
@@ -154,8 +153,8 @@ namespace vke_editor
                     vke_common::GameObject *object = kv.second.get();
                     if (object == selectedObject)
                         continue;
-                    std::string name = std::to_string(object->id);
-                    if (ImGui::MenuItem(name.c_str(), nullptr, nullptr))
+
+                    if (ImGui::MenuItem(object->name, nullptr, nullptr))
                     {
                         selectedObject->SetParent(object);
                     }
@@ -174,6 +173,13 @@ namespace vke_editor
 
         if (selectedObject != nullptr)
         {
+            int layer_cnt = sceneManager->currentScene->layers.size();
+            std::vector<const char *> layers(layer_cnt);
+            for (int i = 0; i < layer_cnt; i++)
+                layers[i] = sceneManager->currentScene->layers[i].c_str();
+            ImGui::Checkbox("static", &(selectedObject->isStatic));
+            ImGui::InputText("name", selectedObject->name, 32);
+            ImGui::Combo("layer", &(selectedObject->layer), layers.data(), layer_cnt);
             if (ImGui::TreeNodeEx("Transform", ImGuiTreeNodeFlags_DefaultOpen))
             {
                 glm::vec3 position = selectedObject->transform.localPosition;
