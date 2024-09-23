@@ -1,13 +1,25 @@
+import os
+
 dlldst = '../out/'
 reldir = '\\"./vkEngine\\"'
 
 env = Environment(CC = 'cl',
                    CCFLAGS = ['/std:c++17','/EHsc','/O2'])
 
+def GetFileWithExt(dir,ext):
+    ret = []
+    for _,dir,files in os.walk(dir):
+        for filename in files:
+            _,suf = os.path.splitext(filename)
+            if suf == ext:
+                ret.append(filename)
+    return ret
 
-libs = ['msvcrtd', 'libcmt', 'Gdi32', 'shell32', 'user32', 'vulkan-1', 'glfw3', 'vkengine','assimp'] 
+selflibs = GetFileWithExt("./vkEngine/libs",".lib")
+
+libs = ['msvcrtd', 'libcmt', 'Gdi32', 'shell32', 'user32', 'ole32', 'vulkan-1', 'vkengine', 'nfd'] + selflibs
 libpath = ['./libs','./vkEngine/libs','D:/VulkanSDK/Lib']
-cpppath = ['./include','./vkEngine/include','D:/VulkanSDK/Include','./imgui']
+cpppath = ['./include','./vkEngine/include','D:/VulkanSDK/Include','./imgui','./vkEngine/include/physx/']
 cppdefines = ['NDEBUG']
 commonsrc = Glob('./imgui/*.cpp') + ['./imgui/backends/imgui_impl_vulkan.cpp','./imgui/backends/imgui_impl_glfw.cpp','./src/editor.cpp','./src/ui_render.cpp']
 
