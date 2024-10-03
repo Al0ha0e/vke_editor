@@ -1,8 +1,11 @@
-#include <editor.hpp>
-#include <component/renderable_object.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <imgui_internal.h>
+#include <nfd.h>
+
 #include <stack>
+
+#include <editor.hpp>
+#include <component/renderable_object.hpp>
 
 namespace vke_editor
 {
@@ -40,18 +43,68 @@ namespace vke_editor
         }
     }
 
+    void VKEditor::showInitWindow()
+    {
+        ImGui::Begin("Project");
+        ImGui::Text("This is some useful text.");
+        if (ImGui::Button("Open Project"))
+        {
+            nfdchar_t *path = NULL;
+            nfdresult_t result = NFD_PickFolder(NULL, &path);
+            // TODO Check Path
+            if (result == NFD_OKAY)
+            {
+                puts("Success!");
+                puts(path);
+                std::string pth(path);
+
+                for (int i = 0; i < pth.length(); i++)
+                    if (pth[i] == '\\')
+                        pth[i] = '/';
+                loadProject(pth);
+                free(path);
+            }
+        }
+
+        if (ImGui::Button("Create Project"))
+        {
+            nfdchar_t *path = NULL;
+            nfdresult_t result = NFD_PickFolder(NULL, &path);
+            // TODO Check Path
+            if (result == NFD_OKAY)
+            {
+                puts(path);
+                std::string pth(path);
+
+                for (int i = 0; i < pth.length(); i++)
+                    if (pth[i] == '\\')
+                        pth[i] = '/';
+
+                createProject(pth);
+                free(path);
+            }
+        }
+        ImGui::End();
+    }
+
     void VKEditor::showMainMenuBar()
     {
         ImGui::BeginMainMenuBar();
+
+        if (ImGui::BeginMenu("Project"))
+        {
+            if (ImGui::MenuItem("Save Project", nullptr, nullptr))
+                saveProject();
+            ImGui::EndMenu();
+        }
+
         if (ImGui::BeginMenu("Scene"))
         {
             if (ImGui::MenuItem("New Scene", nullptr, nullptr))
             {
-                // TODO
-            }
-            if (ImGui::MenuItem("Load Scene", nullptr, nullptr))
-            {
-                // TODO
+                int id = project->ids[ASSET_SCENE];
+                std::string name = "scene" + std::to_string(id);
+                createScene(name, project->projectPath + "/" + name + ".json");
             }
             if (ImGui::MenuItem("Save Scene", nullptr, nullptr))
             {
@@ -81,6 +134,42 @@ namespace vke_editor
             }
             ImGui::EndMenu();
         }
+
+        if (ImGui::BeginMenu("Assets"))
+        {
+            for (int i = 0; i < ASSET_CNT_FLAG; i++)
+            {
+                if (i == ASSET_SCENE)
+                    continue;
+                if (ImGui::MenuItem(("Create " + AssetTypeToName[i]).c_str(), nullptr, nullptr))
+                {
+                    // TODO
+                    std::shared_ptr<Asset> asset;
+                    std::string name = "AAA";
+                    std::string path = "BBB";
+                    switch (i)
+                    {
+                    case ASSET_TEXTURE:
+                        asset = std::make_shared<TextureAsset>(0, name, path);
+                        break;
+                    case ASSET_SHADER:
+                        asset = std::make_shared<ShaderAsset>(0, name, path);
+                        break;
+                    case ASSET_MATERIAL:
+                        asset = std::make_shared<MaterialAsset>(0, name, path);
+                        break;
+                    case ASSET_PHYSICS_MATERIAL:
+                        asset = std::make_shared<PhysicsMaterialAsset>(0, name, path);
+                        break;
+                    default:
+                        break;
+                    }
+                    project->AddAsset(asset);
+                }
+            }
+            ImGui::EndMenu();
+        }
+
         ImGui::EndMainMenuBar();
     }
 
@@ -161,6 +250,13 @@ namespace vke_editor
                 }
                 ImGui::EndMenu();
             }
+
+            if (ImGui::MenuItem("Delete Object"))
+            {
+                sceneManager->currentScene->RemoveObject(selectedObject->id);
+                selectedObject = nullptr;
+            }
+
             ImGui::EndPopup();
         }
 
@@ -196,6 +292,8 @@ namespace vke_editor
                     selectedObject->SetLocalScale(scale);
                 ImGui::TreePop();
             }
+
+            showComponents();
         }
 
         ImGui::End();
@@ -204,16 +302,36 @@ namespace vke_editor
     void VKEditor::showAssets()
     {
         ImGui::Begin("Assets");
-        ImGui::Text("This is some useful text.");
+
+        int width = ImGui::GetWindowSize().x;
+        int unitWidth = 128;
+        ImGui::Columns(std::max(width / unitWidth, 1), nullptr, false);
+
+        auto &assets = project->assets;
+
+        for (int i = 0; i < ASSET_CNT_FLAG; i++)
+            for (auto &kv : assets[i])
+            {
+                ImGui::Text((AssetTypeToName[kv.second->type] + kv.second->name).c_str());
+                ImGui::NextColumn();
+            }
+
         ImGui::End();
     }
 
     void VKEditor::handleGUILogic()
     {
-        instance->showMainMenuBar();
-        instance->showHierarchy();
-        instance->showInspector();
-        instance->showAssets();
+        if (instance->sceneManager->currentScene != nullptr)
+        {
+            instance->showMainMenuBar();
+            instance->showHierarchy();
+            instance->showInspector();
+            instance->showAssets();
+        }
+        else
+        {
+            instance->showInitWindow();
+        }
     }
 
     void VKEditor::createGameObject(GameObjectPreset preset)
@@ -249,8 +367,72 @@ namespace vke_editor
         sceneManager->currentScene->AddObject(std::move(object));
     }
 
+    vke_common::GameObject *VKEditor::createCameraObject()
+    {
+        vke_common::TransformParameter camParam(glm::vec3(0.0f, 0.0f, 4.0f), glm::vec3(1), glm::quat(1, 0, 0, 0));
+        vke_common::GameObject *cameraGameObj = new vke_common::GameObject(camParam);
+        memcpy(cameraGameObj->name, "SceneCam", 9);
+        cameraGameObj->layer = 1;
+        cameraGameObj->AddComponent(std::make_unique<vke_component::Camera>(105, 800, 600, 0.01, 1000, cameraGameObj));
+        return cameraGameObj;
+    }
+
+    void VKEditor::registerSceneCamera(vke_common::Scene *scene)
+    {
+        // TODO delete cameraGameObj
+        // TODO ImGuiWindow *sceneWindow = ImGui::FindWindowByName("Scene");
+        // vke_common::TransformParameter camParam(glm::vec3(0.0f, 4.0f, 0.0f), glm::vec3(1), glm::quat(1.0, 0.0, 0.0, 0.0));
+        // vke_common::GameObject *cameraGameObj = new vke_common::GameObject(camParam);
+        // cameraGameObj->layer = 1;
+        // cameraGameObj->AddComponent(std::make_unique<vke_component::Camera>(105, 800, 600, 0.01, 1000, cameraGameObj));
+        // sceneCamera = cameraGameObj;
+        uint32_t id = ((vke_component::Camera *)(sceneCamera->components[0].get()))->id;
+        vke_render::Renderer::SetCurrentCamera(id);
+        scene->AddObject(std::unique_ptr<vke_common::GameObject>(sceneCamera));
+    }
+
+    void VKEditor::createScene(std::string &name, std::string &path)
+    {
+        std::unique_ptr<vke_common::Scene> scene = std::make_unique<vke_common::Scene>();
+        scene->path = path;
+
+        project->AddAsset(std::make_shared<SceneAsset>(0, name, path));
+        sceneCamera = createCameraObject();
+        sceneManager->SetCurrentScene(std::move(scene));
+        registerSceneCamera(sceneManager->currentScene.get());
+        sceneManager->SaveScene(sceneManager->currentScene->path);
+    }
+
     void VKEditor::saveScene()
     {
         vke_common::SceneManager::SaveScene(sceneManager->currentScene->path);
+    }
+
+    void VKEditor::loadScene(std::string &path)
+    {
+        sceneManager->LoadScene(path);
+        sceneCamera = createCameraObject();
+        registerSceneCamera(sceneManager->currentScene.get());
+    }
+
+    void VKEditor::createProject(std::string &path)
+    {
+        project = std::make_unique<Project>(path);
+        createScene(std::string("default_scene"), path + "/default_scene.json");
+        saveProject();
+    }
+
+    void VKEditor::loadProject(std::string &path)
+    {
+        project = std::make_unique<Project>(path, resourceManager->LoadJSON(path + "/project.json"));
+        std::shared_ptr<SceneAsset> sceneAsset = std::dynamic_pointer_cast<SceneAsset>(project->assets[ASSET_SCENE][1]);
+        loadScene(sceneAsset->path);
+    }
+
+    void VKEditor::saveProject()
+    {
+        std::ofstream ofs(project->projectPath + "/project.json");
+        ofs << project->ToJSON();
+        ofs.close();
     }
 };

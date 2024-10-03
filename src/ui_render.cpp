@@ -296,7 +296,9 @@ namespace vke_editor
         ImGui::DockSpaceOverViewport(ImGui::GetMainViewport());
 
         updateGUI();
-        showScene();
+
+        if (vke_common::SceneManager::GetInstance()->currentScene != nullptr)
+            showScene();
 
         ImGuiIO &io = ImGui::GetIO();
         ImGui::Render();

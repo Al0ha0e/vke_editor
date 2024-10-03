@@ -5,6 +5,8 @@
 #include <time.hpp>
 #include <input.hpp>
 #include <ui_render.hpp>
+#include <project.hpp>
+#include <component/camera.hpp>
 
 namespace vke_editor
 {
@@ -24,7 +26,8 @@ namespace vke_editor
     private:
         static VKEditor *instance;
         VKEditor()
-            : rightClickedInSceneWindow(false), sceneCameraRotateSpeed(1.5f), sceneCameraMoveSpeed(2.5f), selectedObject(nullptr) {}
+            : rightClickedInSceneWindow(false), sceneCameraRotateSpeed(1.5f), sceneCameraMoveSpeed(2.5f), selectedObject(nullptr),
+              project(nullptr) {}
         ~VKEditor() {}
         VKEditor(const VKEditor &);
         VKEditor &operator=(const VKEditor);
@@ -40,6 +43,7 @@ namespace vke_editor
         vke_common::TimeManager *timeManager;
         vke_common::ResourceManager *resourceManager;
         vke_common::SceneManager *sceneManager;
+        std::unique_ptr<Project> project;
 
         static VKEditor *Init()
         {
@@ -63,16 +67,19 @@ namespace vke_editor
                                                         passes, customPasses, customPassInfo);
             instance->resourceManager = vke_common::ResourceManager::GetInstance();
             instance->sceneManager = vke_common::SceneManager::GetInstance();
-            vke_common::SceneManager::LoadScene("./tests/scene/test_scene.json");
+            // vke_common::SceneManager::LoadScene("./tests/scene/test_physx_scene.json");
+            // instance->sceneCamera = instance->sceneManager->currentScene->objects[1].get();
 
-            instance->sceneCamera = instance->sceneManager->currentScene->objects[1].get();
+            instance->sceneCamera = instance->createCameraObject();
+            instance->tmpCamera = std::unique_ptr<vke_common::GameObject>(instance->sceneCamera);
 
             return instance;
         }
 
         void Update()
         {
-            handleEditorLogic();
+            if (sceneManager->currentScene != nullptr)
+                handleEditorLogic();
             engine->Update();
             UIRenderer::Update();
         };
@@ -111,9 +118,11 @@ namespace vke_editor
         float sceneCameraRotateSpeed;
         float sceneCameraMoveSpeed;
         vke_common::GameObject *sceneCamera;
+        std::unique_ptr<vke_common::GameObject> tmpCamera;
         vke_common::GameObject *selectedObject;
 
         void handleEditorLogic();
+        void showInitWindow();
         void showMainMenuBar();
         void showHierarchy();
         void drawHierarchyList(vke_common::GameObject *object, ImGuiTreeNodeFlags commonFlags, bool &showRightMenu);
@@ -121,9 +130,19 @@ namespace vke_editor
         void showAssets();
         static void handleGUILogic();
 
-        void newScene();
-        void loadScene();
+        void showComponents();
+        void showCamera();
+        void showRenderableObject();
+        void showRigidbody();
+
+        void createProject(std::string &path);
+        void loadProject(std::string &path);
+        void saveProject();
+        void createScene(std::string &name, std::string &path);
+        void loadScene(std::string &path);
         void saveScene();
+        void registerSceneCamera(vke_common::Scene *scene);
+        vke_common::GameObject *createCameraObject();
 
         void createGameObject(GameObjectPreset preset);
     };
