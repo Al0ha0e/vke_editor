@@ -10,17 +10,17 @@ namespace vke_editor
 
     void VKEditor::showComponents()
     {
-        for (auto &component : selectedObject->components)
-        {
-            switch (component->type)
-            {
-                SHOW_COMPONENT_CASE(COMPONENT_CAMERA, showCamera)
-                SHOW_COMPONENT_CASE(COMPONENT_RENDERABLE_OBJECT, showRenderableObject)
-                SHOW_COMPONENT_CASE(COMPONENT_RIGIDBODY, showRigidbody)
-            default:
-                break;
-            }
-        }
+        // for (auto &component : selectedObject->components)
+        // {
+        //     switch (component->type)
+        //     {
+        //         SHOW_COMPONENT_CASE(COMPONENT_CAMERA, showCamera)
+        //         SHOW_COMPONENT_CASE(COMPONENT_RENDERABLE_OBJECT, showRenderableObject)
+        //         SHOW_COMPONENT_CASE(COMPONENT_RIGIDBODY, showRigidbody)
+        //     default:
+        //         break;
+        //     }
+        // }
 
         if (ImGui::Button("AddComponent")) // TODO
             ;

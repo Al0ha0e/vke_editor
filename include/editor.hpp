@@ -41,7 +41,7 @@ namespace vke_editor
         vke_common::Engine *engine;
         vke_common::InputManager *inputManager;
         vke_common::TimeManager *timeManager;
-        vke_common::ResourceManager *resourceManager;
+        vke_common::AssetManager *assetManager;
         vke_common::SceneManager *sceneManager;
         std::unique_ptr<Project> project;
 
@@ -65,7 +65,7 @@ namespace vke_editor
 
             instance->engine = vke_common::Engine::Init(&(UIRenderer::GetInstance()->engineRenderContext),
                                                         passes, customPasses, customPassInfo);
-            instance->resourceManager = vke_common::ResourceManager::GetInstance();
+            instance->assetManager = vke_common::AssetManager::GetInstance();
             instance->sceneManager = vke_common::SceneManager::GetInstance();
             // vke_common::SceneManager::LoadScene("./tests/scene/test_physx_scene.json");
             // instance->sceneCamera = instance->sceneManager->currentScene->objects[1].get();
@@ -138,7 +138,7 @@ namespace vke_editor
         void createProject(std::string &path);
         void loadProject(std::string &path);
         void saveProject();
-        void createScene(std::string &name, std::string &path);
+        void createScene();
         void loadScene(std::string &path);
         void saveScene();
         void registerSceneCamera(vke_common::Scene *scene);

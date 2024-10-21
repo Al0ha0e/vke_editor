@@ -102,9 +102,7 @@ namespace vke_editor
         {
             if (ImGui::MenuItem("New Scene", nullptr, nullptr))
             {
-                int id = project->ids[ASSET_SCENE];
-                std::string name = "scene" + std::to_string(id);
-                createScene(name, project->projectPath + "/" + name + ".json");
+                createScene();
             }
             if (ImGui::MenuItem("Save Scene", nullptr, nullptr))
             {
@@ -137,36 +135,19 @@ namespace vke_editor
 
         if (ImGui::BeginMenu("Assets"))
         {
-            for (int i = 0; i < ASSET_CNT_FLAG; i++)
-            {
-                if (i == ASSET_SCENE)
-                    continue;
-                if (ImGui::MenuItem(("Create " + AssetTypeToName[i]).c_str(), nullptr, nullptr))
-                {
-                    // TODO
-                    std::shared_ptr<Asset> asset;
-                    std::string name = "AAA";
-                    std::string path = "BBB";
-                    switch (i)
-                    {
-                    case ASSET_TEXTURE:
-                        asset = std::make_shared<TextureAsset>(0, name, path);
-                        break;
-                    case ASSET_SHADER:
-                        asset = std::make_shared<ShaderAsset>(0, name, path);
-                        break;
-                    case ASSET_MATERIAL:
-                        asset = std::make_shared<MaterialAsset>(0, name, path);
-                        break;
-                    case ASSET_PHYSICS_MATERIAL:
-                        asset = std::make_shared<PhysicsMaterialAsset>(0, name, path);
-                        break;
-                    default:
-                        break;
-                    }
-                    project->AddAsset(asset);
-                }
-            }
+            std::string name = "AAA";
+            std::string path = "BBB";
+
+            if (ImGui::MenuItem("Create Texture", nullptr, nullptr))
+                assetManager->CreateTextureAsset(name, path);
+            if (ImGui::MenuItem("Create VFShader", nullptr, nullptr))
+                assetManager->CreateVFShaderAsset(name, path);
+            if (ImGui::MenuItem("Create ComputeShader", nullptr, nullptr))
+                assetManager->CreateComputeShaderAsset(name, path);
+            if (ImGui::MenuItem("Create Material", nullptr, nullptr))
+                assetManager->CreateMaterialAsset(name, path);
+            if (ImGui::MenuItem("Create PhysicalMaterial", nullptr, nullptr))
+                assetManager->CreatePhysicsMaterialAsset(name, path);
             ImGui::EndMenu();
         }
 
@@ -299,6 +280,13 @@ namespace vke_editor
         ImGui::End();
     }
 
+#define SHOW_ASSETS(cache)                                                                   \
+    for (auto &kv : assetManager->cache)                                                     \
+    {                                                                                        \
+        ImGui::Text((vke_common::AssetTypeToName[kv.second.type] + kv.second.name).c_str()); \
+        ImGui::NextColumn();                                                                 \
+    }
+
     void VKEditor::showAssets()
     {
         ImGui::Begin("Assets");
@@ -307,14 +295,13 @@ namespace vke_editor
         int unitWidth = 128;
         ImGui::Columns(std::max(width / unitWidth, 1), nullptr, false);
 
-        auto &assets = project->assets;
-
-        for (int i = 0; i < ASSET_CNT_FLAG; i++)
-            for (auto &kv : assets[i])
-            {
-                ImGui::Text((AssetTypeToName[kv.second->type] + kv.second->name).c_str());
-                ImGui::NextColumn();
-            }
+        SHOW_ASSETS(textureCache)
+        SHOW_ASSETS(meshCache)
+        SHOW_ASSETS(vfShaderCache)
+        SHOW_ASSETS(computeShaderCache)
+        SHOW_ASSETS(materialCache)
+        SHOW_ASSETS(physicsMaterialCache)
+        SHOW_ASSETS(sceneCache)
 
         ImGui::End();
     }
@@ -341,24 +328,24 @@ namespace vke_editor
 
         if (preset != OBJECT_EMPTY)
         {
-            std::shared_ptr<vke_render::Material> material = resourceManager->LoadMaterial("./tests/material/mat1.json");
+            std::shared_ptr<vke_render::Material> material = assetManager->LoadMaterial(vke_common::BUILTIN_MATERIAL_DEFAULT_ID);
             std::shared_ptr<const vke_render::Mesh> mesh;
             switch (preset)
             {
             case OBJECT_PLANE:
-                mesh = resourceManager->LoadMesh(vke_common::BuiltinPlanePath);
+                mesh = assetManager->LoadMesh(vke_common::BUILTIN_MESH_PLANE_ID);
                 break;
             case OBJECT_CUBE:
-                mesh = resourceManager->LoadMesh(vke_common::BuiltinCubePath);
+                mesh = assetManager->LoadMesh(vke_common::BUILTIN_MESH_CUBE_ID);
                 break;
             case OBJECT_SPHERE:
-                mesh = resourceManager->LoadMesh(vke_common::BuiltinSpherePath);
+                mesh = assetManager->LoadMesh(vke_common::BUILTIN_MESH_SPHERE_ID);
                 break;
             case OBJECT_CYLINDER:
-                mesh = resourceManager->LoadMesh(vke_common::BuiltinCylinderPath);
+                mesh = assetManager->LoadMesh(vke_common::BUILTIN_MESH_CYLINDER_ID);
                 break;
             case OBJECT_MONKEY:
-                mesh = resourceManager->LoadMesh(vke_common::BuiltinMonkeyPath);
+                mesh = assetManager->LoadMesh(vke_common::BUILTIN_MESH_MONKEY_ID);
                 break;
             }
             object->AddComponent(std::make_unique<vke_component::RenderableObject>(material, mesh, object.get()));
@@ -391,12 +378,16 @@ namespace vke_editor
         scene->AddObject(std::unique_ptr<vke_common::GameObject>(sceneCamera));
     }
 
-    void VKEditor::createScene(std::string &name, std::string &path)
+    void VKEditor::createScene()
     {
+        vke_common::AssetHandle id = assetManager->AllocateAssetID(vke_common::ASSET_SCENE);
+        std::string name = "scene" + std::to_string(id);
+        std::string path = project->projectPath + "/" + name + ".json";
+        vke_common::SceneAsset asset(id, name, path);
+        assetManager->SetSceneAsset(id, asset);
+
         std::unique_ptr<vke_common::Scene> scene = std::make_unique<vke_common::Scene>();
         scene->path = path;
-
-        project->AddAsset(std::make_shared<SceneAsset>(0, name, path));
         sceneCamera = createCameraObject();
         sceneManager->SetCurrentScene(std::move(scene));
         registerSceneCamera(sceneManager->currentScene.get());
@@ -418,19 +409,24 @@ namespace vke_editor
     void VKEditor::createProject(std::string &path)
     {
         project = std::make_unique<Project>(path);
-        createScene(std::string("default_scene"), path + "/default_scene.json");
+        assetManager->ClearAssetLUT();
+        createScene();
         saveProject();
     }
 
     void VKEditor::loadProject(std::string &path)
     {
-        project = std::make_unique<Project>(path, resourceManager->LoadJSON(path + "/project.json"));
-        std::shared_ptr<SceneAsset> sceneAsset = std::dynamic_pointer_cast<SceneAsset>(project->assets[ASSET_SCENE][1]);
+        project = std::make_unique<Project>(path, assetManager->LoadJSON(path + "/project.json"));
+        assetManager->ClearAssetLUT();
+        assetManager->LoadAssetLUT(project->assetLUTPath);
+        vke_common::SceneAsset *sceneAsset = assetManager->GetSceneAsset(1);
         loadScene(sceneAsset->path);
     }
 
     void VKEditor::saveProject()
     {
+        assetManager->SaveAssetLUT(project->assetLUTPath);
+        saveScene();
         std::ofstream ofs(project->projectPath + "/project.json");
         ofs << project->ToJSON();
         ofs.close();
